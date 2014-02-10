@@ -10,8 +10,10 @@
 #define OFX_HTTP_TYPES
 
 
-#define OFX_HTTP_GET  0
-#define OFX_HTTP_POST 1
+#define OFX_HTTP_GET  	0
+#define OFX_HTTP_POST 	1
+#define OFX_HTTP_PUT  	2
+#define OFX_HTTP_DELETE 3
 
 #include "ofUtils.h"
 

@@ -111,12 +111,21 @@ class ofxHttpUtils : public ofThread{
 		bool verbose;
         int timeoutSeconds;
         bool sendCookies;
-
+		
 		//--------------------------------
 		// http utils
 		string generateUrl(ofxHttpForm & form);
 		ofxHttpResponse doPostForm(ofxHttpForm & form);
 
+		// ----------------------------------
+		string requestTypeToString( int _type ) {
+			if( _type == OFX_HTTP_GET ) 		{ return "GET"; }
+			else if( _type == OFX_HTTP_POST ) 	{ return "POST"; }
+			else if( _type == OFX_HTTP_PUT ) 	{ return "PUT"; }
+			else if( _type == OFX_HTTP_DELETE 	) { return "DELETE"; }
+			else { return "UNKNOWN"; }
+		}
+	
 		std::queue<ofxHttpForm> forms;
 		vector<Poco::Net::HTTPCookie> cookies;
 		Poco::Net::HTTPBasicCredentials auth;

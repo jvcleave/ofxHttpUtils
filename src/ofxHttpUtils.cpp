@@ -85,9 +85,9 @@ void ofxHttpUtils::threadedFunction(){
 			ofxHttpForm form = forms.front();
 			ofxHttpResponse response;
 	    	unlock();
-			if(form.method==OFX_HTTP_POST){
+			if(form.method != OFX_HTTP_GET){
 				response = doPostForm(form);
-				ofLogVerbose("ofxHttpUtils") << "(thread running) form submitted (post): "  << form.name;
+				ofLogVerbose("ofxHttpUtils") << "(thread running) form submitted (" << requestTypeToString(form.method) << "): "  << form.name;
 			}else{
 				string url = generateUrl(form);
 				ofLogVerbose("ofxHttpUtils") << "form submitted (get):" << form.name;
@@ -214,8 +214,15 @@ ofxHttpResponse ofxHttpUtils::doPostForm(ofxHttpForm & form){
         std::string path(uri.getPathAndQuery());
         if (path.empty()) path = "/";
 
+		
         //HTTPClientSession session(uri.getHost(), uri.getPort());
 		HTTPRequest req(HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1);
+		if( form.method == OFX_HTTP_PUT ) 			{ req.setMethod(HTTPRequest::HTTP_PUT); }
+		else if( form.method == OFX_HTTP_DELETE )  	{ req.setMethod(HTTPRequest::HTTP_DELETE); }
+		
+		//HTTPRequest req(HTTPRequest::HTTP_PUT, path, HTTPMessage::HTTP_1_1);
+		//HTTPRequest req(HTTPRequest::HTTP_DELETE, path, HTTPMessage::HTTP_1_1);
+		
 		if(auth.getUsername()!="") auth.authenticate(req);
 
 		if(sendCookies){
