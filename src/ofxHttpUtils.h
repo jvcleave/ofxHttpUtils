@@ -25,7 +25,7 @@
 #include "ofxHttpTypes.h"
 #include "ofEvents.h"
 
-
+class ofxHttpUtils;
 class ofxHttpListener;
 class ofxHttpEventManager;
 
@@ -43,8 +43,9 @@ struct ofxHttpResponse{
 
         url = turl;
         pocoResponse.getCookies(cookies);
+        httpUtils = NULL;
 	}
-
+    ofxHttpUtils* httpUtils;
 	ofxHttpResponse(){}
 
 	string getURLFilename(){
@@ -67,6 +68,7 @@ class ofxHttpUtils : public ofThread{
 
 		ofxHttpUtils();
 		~ofxHttpUtils();
+    
 		//-------------------------------
 		// non blocking functions
 
@@ -105,9 +107,9 @@ class ofxHttpUtils : public ofThread{
 
 		void start();
         void stop();
-
+        map<string, string> customHeaders;
     protected:
-
+    
 		bool verbose;
         int timeoutSeconds;
         bool sendCookies;

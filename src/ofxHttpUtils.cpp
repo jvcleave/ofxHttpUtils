@@ -121,7 +121,7 @@ void ofxHttpUtils::clearQueue(){
 string ofxHttpUtils::generateUrl(ofxHttpForm & form) {
     // url to send to
     string url = form.action;
-
+    ofLogVerbose("ofxHttpUtils") << "generateUrl url: " << url;
     // do we have any form fields?
     int numfields = form.formIds.size();
     if(numfields > 0){
@@ -132,6 +132,7 @@ string ofxHttpUtils::generateUrl(ofxHttpForm & form) {
                 url += "&";
         }
     }
+    ofLogVerbose("ofxHttpUtils") << "FULL url: " << url;
     return url;
 }
 
@@ -145,7 +146,7 @@ ofxHttpResponse ofxHttpUtils::postData(string url, const ofBuffer & data,  strin
 		//HTTPClientSession session(uri.getHost(), uri.getPort());
 		HTTPRequest req(HTTPRequest::HTTP_POST, path, HTTPMessage::HTTP_1_1);
 		if(auth.getUsername()!="") auth.authenticate(req);
-
+        
 		if(sendCookies){
 			for(unsigned i=0; i<cookies.size(); i++){
 				NameValueCollection reqCookies;
@@ -157,7 +158,15 @@ ofxHttpResponse ofxHttpUtils::postData(string url, const ofBuffer & data,  strin
 		if(contentType!=""){
 			req.setContentType(contentType);
 		}
-
+        
+        typename map<string, string>::iterator it = customHeaders.begin();
+        while (it != customHeaders.end())
+        {
+            //ofLogVerbose() << "(*it).first: " << (*it).first << " (*it).second " << (*it).second;
+            req.set((*it).first, (*it).second);
+            ++it;
+        }
+        
 		req.setContentLength(data.size());
 
 		HTTPResponse res;
@@ -188,7 +197,7 @@ ofxHttpResponse ofxHttpUtils::postData(string url, const ofBuffer & data,  strin
 			uri.resolve(res.get("Location"));
 			response.location = uri.toString();
 		}
-
+        response.httpUtils = this;
 		ofNotifyEvent(newResponseEvent, response, this);
 	}catch (Exception& exc){
 
@@ -232,7 +241,15 @@ ofxHttpResponse ofxHttpUtils::doPostForm(ofxHttpForm & form){
 				req.setCookies(reqCookies);
 			}
 		}
-
+        
+        typename map<string, string>::iterator customHeadersIterator = customHeaders.begin();
+        while (customHeadersIterator != customHeaders.end())
+        {
+            ofLogVerbose() << "(*customHeadersIterator).first: " << (*customHeadersIterator).first << " (*customHeadersIterator).second " << (*customHeadersIterator).second;
+            req.set((*customHeadersIterator).first, (*customHeadersIterator).second);
+            ++customHeadersIterator;
+        }
+        
         HTTPResponse res;
 		HTMLForm pocoForm;
 		// create the form data to send
@@ -254,9 +271,9 @@ ofxHttpResponse ofxHttpUtils::doPostForm(ofxHttpForm & form){
 			ofLogVerbose("ofxHttpUtils") << "adding file: " << fileName << " path: " << it->second;
 			pocoForm.addPart(it->first,new FilePartSource(it->second));
 		}
-
+       
         pocoForm.prepareSubmit(req);
-
+        
         ofPtr<HTTPSession> session;
         istream * rs;
         if(uri.getScheme()=="https"){
@@ -272,7 +289,7 @@ ofxHttpResponse ofxHttpUtils::doPostForm(ofxHttpForm & form){
         	rs = &httpSession->receiveResponse(res);
         	session = ofPtr<HTTPSession>(httpSession);
         }
-
+        ofLogVerbose(__func__) << "form.action: " << form.action;
 		response = ofxHttpResponse(res, *rs, form.action);
 
 		if(sendCookies){
@@ -284,7 +301,7 @@ ofxHttpResponse ofxHttpUtils::doPostForm(ofxHttpForm & form){
 			uri.resolve(res.get("Location"));
 			response.location = uri.toString();
 		}
-
+        response.httpUtils = this;
     	ofNotifyEvent(newResponseEvent, response, this);
 
 
@@ -298,6 +315,7 @@ ofxHttpResponse ofxHttpUtils::doPostForm(ofxHttpForm & form){
     	ofLogError("ofxHttpUtils") << exc.displayText();
         response.status = -1;
         response.reasonForStatus = exc.displayText();
+        response.httpUtils = this;
     	ofNotifyEvent(newResponseEvent, response, this);
 
     }
@@ -317,6 +335,14 @@ ofxHttpResponse ofxHttpUtils::getUrl(string url){
 		HTTPRequest req(HTTPRequest::HTTP_GET, path, HTTPMessage::HTTP_1_1);
 
 		if(auth.getUsername()!="") auth.authenticate(req);
+       
+       typename map<string, string>::iterator it = customHeaders.begin();
+       while (it != customHeaders.end())
+       {
+           //ofLogVerbose() << "(*it).first: " << (*it).first << " (*it).second " << (*it).second;
+           req.set((*it).first, (*it).second);
+           ++it;
+       }
 
         if(sendCookies){
         	for(unsigned i=0; i<cookies.size(); i++){
@@ -354,7 +380,7 @@ ofxHttpResponse ofxHttpUtils::getUrl(string url){
 			uri.resolve(res.get("Location"));
 			response.location = uri.toString();
 		}
-
+        response.httpUtils = this;
 		ofNotifyEvent( newResponseEvent, response, this );
 
 		//std::cout << res.getStatus() << " " << res.getReason() << std::endl;
@@ -364,6 +390,7 @@ ofxHttpResponse ofxHttpUtils::getUrl(string url){
 		ofLogError("ofxHttpUtils") << exc.displayText();
         response.status = -1;
         response.reasonForStatus = exc.displayText();
+        response.httpUtils = this;
     	ofNotifyEvent(newResponseEvent, response, this);
 	}
 	return response;
@@ -376,7 +403,7 @@ void ofxHttpUtils::addUrl(string url){
 	form.action=url;
 	form.method=OFX_HTTP_GET;
     form.name=form.action;
-
+    ofLogVerbose(__func__) << "form.action: " << form.action;
 	addForm(form);
 }
 
